@@ -46,7 +46,7 @@ This document provides an overview of the `src/` directory structure and design,
     *   `apply_prompt_template()`: Takes a prompt name and the current agent `State`, renders the template, and prepends it as a system message to the existing conversation messages.
 *   **`.md` files** (e.g., `planner.md`, `researcher.md`): Contain the actual Jinja2 prompt templates for different agents/nodes.
 *   **`planner_model.py`**: Defines a Pydantic model `Plan` for structured output from the planner LLM.
-*   Subdirectories like `podcast/`, `ppt/`, `prose/` contain prompts for specialized tasks of the original `deer-flow`.
+*   The subdirectories for specialized tasks like `podcast/`, `ppt/`, and `prose/` have been removed as they are not relevant to the current defect analysis goals.
 
 ## LLMs (`src/llms/`)
 
@@ -75,11 +75,9 @@ This document provides an overview of the `src/` directory structure and design,
 
 *   **`json_utils.py`**: Provides utilities for JSON manipulation, such as `repair_json_output` (used in `nodes.py` to fix potentially malformed JSON from LLMs).
 
-## Specialized Modules (`src/prose/`, `src/podcast/`, `src/ppt/`)
+## Specialized Modules
 
-*   These appear to be modules from the original `deer-flow` designed for specific content generation tasks (prose, podcasts, PowerPoint presentations).
-*   Each typically contains its own `graph/` subdirectory and `types.py`, suggesting they might define specialized sub-workflows or agent configurations.
-*   Their relevance to the new defect analysis goal needs to be assessed.
+*   The specialized modules from the original `deer-flow` (`src/prose/`, `src/podcast/`, `src/ppt/`) designed for specific content generation tasks (prose, podcasts, PowerPoint presentations) have been removed as they are not aligned with the new defect analysis objectives.
 
 ## Overall Design
 

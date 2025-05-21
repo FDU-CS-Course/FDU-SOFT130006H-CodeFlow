@@ -71,17 +71,5 @@ class TTSRequest(BaseModel):
     frontend_type: Optional[str] = Field("unitTson", description="Frontend type")
 
 
-class GeneratePodcastRequest(BaseModel):
-    content: str = Field(..., description="The content of the podcast")
-
-
 class GeneratePPTRequest(BaseModel):
     content: str = Field(..., description="The content of the ppt")
-
-
-class GenerateProseRequest(BaseModel):
-    prompt: str = Field(..., description="The content of the prose")
-    option: str = Field(..., description="The option of the prose writer")
-    command: Optional[str] = Field(
-        "", description="The user custom command of the prose writer"
-    )
