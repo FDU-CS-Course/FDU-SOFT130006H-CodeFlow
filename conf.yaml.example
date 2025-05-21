@@ -7,3 +7,7 @@ BASIC_MODEL:
   base_url: https://ark.cn-beijing.volces.com/api/v3
   model: "doubao-1-5-pro-32k-250115"
   api_key: xxxx
+
+# Note: The CodebaseSearchTool (codebase_exact_search) relies on the 'rg' (ripgrep) command-line tool.
+# Please ensure ripgrep is installed and available in your system's PATH.
+# You can find installation instructions at https://github.com/BurntSushi/ripgrep

@@ -33,12 +33,9 @@ This document outlines the development plan to adapt the `deer-flow` codebase in
 *   **Objective:** Implement or adapt tools required for code analysis as per `docs/demands.md`.
 *   **Tasks:**
     *   **"File Reading" Tool (`src/tools/`):**
-        *   Verify if an existing file reading tool can read specific line ranges from a file.
-        *   If not, enhance or create a tool that accepts a file path and a line range (start, end) to return the content.
+        *   **Implemented:** A new tool `ReadFileLinesTool` in `src/tools/file_reader.py` allows reading specific line ranges. It is exported in `src/tools/__init__.py`.
     *   **"Codebase Search" Tool (Exact Match) (`src/tools/`):**
-        *   Implement a new tool for exact keyword searching (functions, classes, variables) within a specified scope (e.g., specific files or directories).
-        *   The tool should return the location (file, line number) and surrounding context for each match.
-        *   Consider leveraging robust command-line tools like `ripgrep` or static analysis capabilities if feasible.
+        *   **Implemented:** A new tool `CodebaseSearchTool` in `src/tools/codebase_search.py` uses `ripgrep` for fast exact searching. It provides results in JSON format with context and is exported in `src/tools/__init__.py`. Requires `ripgrep` to be installed on the system.
     *   **"Fuzzy Codebase Search" Tool (Semantic Search) (`src/tools/`):**
         *   Design and implement a tool for semantic search across the entire codebase.
         *   **Components:**

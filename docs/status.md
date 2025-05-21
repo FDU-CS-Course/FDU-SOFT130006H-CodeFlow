@@ -36,6 +36,8 @@ This document provides an overview of the `src/` directory structure and design,
     *   `VolcengineTTS` (from `tts.py`): For text-to-speech.
 *   **`tavily_search/`**: Contains specific integration for Tavily search (e.g., `LoggedTavilySearch` used in `nodes.py`).
 *   **`decorators.py`**: Likely provides decorators for tool functions (e.g., for logging).
+*   **`file_reader.py`**: Implements `ReadFileLinesTool` for reading specific line ranges from files.
+*   **`codebase_search.py`**: Implements `CodebaseSearchTool` for exact codebase searching using `ripgrep`.
 
 ## Prompts (`src/prompts/`)
 
