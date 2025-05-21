@@ -18,6 +18,7 @@ from src.tools import (
     crawl_tool,
     get_web_search_tool,
     python_repl_tool,
+    ReadFileLinesTool,
 )
 
 from src.config.agents import AGENT_LLM_MAP
@@ -85,7 +86,69 @@ def planner_node(
     logger.info("Planner generating full plan")
     configurable = Configuration.from_runnable_config(config)
     plan_iterations = state["plan_iterations"] if state.get("plan_iterations", 0) else 0
-    messages = apply_prompt_template("planner", state, configurable)
+
+    # --- New logic for CppCheck input and context gathering ---
+    source_code_context = ""
+    if state.get("cppcheck_file") and state.get("cppcheck_line") is not None:
+        file_path = state["cppcheck_file"]
+        line = state["cppcheck_line"]
+        # Fetch +/- 20 lines around the defect line
+        start_line = max(1, line - 20)
+        end_line = line + 20
+        try:
+            # Assuming ReadFileLinesTool is available and works synchronously for simplicity here
+            # In a real async graph, you might want to use _arun or make this part async
+            file_reader_tool = ReadFileLinesTool()
+            source_code_context = file_reader_tool.run(
+                file_path=file_path, start_line=start_line, end_line=end_line
+            )
+            logger.info(f"Fetched source code context for {file_path}:{line}")
+        except Exception as e:
+            logger.error(f"Error fetching source code context: {e}")
+            source_code_context = f"Error fetching source code: {e}"
+    
+    directory_tree = ""
+    # Limit directory tree depth to avoid excessive output
+    max_depth = 3 
+    if state.get("cppcheck_file"):
+        project_root = os.path.dirname(state["cppcheck_file"]) # Infer project root
+        # More robust project root finding might be needed depending on structure
+        # For now, using the directory of the cppcheck_file as a starting point
+        # And going up one level if it's a common src or similar directory
+        if os.path.basename(project_root).lower() in ["src", "source", "app"]:
+            project_root = os.path.dirname(project_root)
+
+        tree_lines = []
+        try:
+            for root, dirs, files in os.walk(project_root, topdown=True):
+                # Calculate current depth
+                depth = root.replace(project_root, '').count(os.sep)
+                if depth > max_depth:
+                    dirs[:] = [] # Don't go deeper
+                    files[:] = []
+
+                indent = "    " * depth
+                tree_lines.append(f"{indent}{os.path.basename(root)}/")
+                sub_indent = "    " * (depth + 1)
+                for f in files:
+                    # Optionally filter for relevant file types, e.g., .c, .cpp, .h
+                    if f.endswith(('.c', '.cpp', '.h', '.hpp', '.java', '.py', '.js', '.ts')): # Example filter
+                         tree_lines.append(f"{sub_indent}{f}")
+            directory_tree = "\n".join(tree_lines)
+            logger.info(f"Generated directory tree for project root: {project_root}")
+        except Exception as e:
+            logger.error(f"Error generating directory tree: {e}")
+            directory_tree = f"Error generating directory tree: {e}"
+
+    # Update state with the fetched context
+    current_messages = state.get("messages", [])
+    updated_state_dict = {
+        "source_code_context": source_code_context,
+        "directory_tree": directory_tree,
+    }
+    # --- End of new logic ---
+
+    messages = apply_prompt_template("planner", {**state, **updated_state_dict}, configurable)
 
     if (
         plan_iterations == 0
@@ -141,6 +204,7 @@ def planner_node(
             update={
                 "messages": [AIMessage(content=full_response, name="planner")],
                 "current_plan": new_plan,
+                **updated_state_dict,
             },
             goto="reporter",
         )
@@ -148,6 +212,7 @@ def planner_node(
         update={
             "messages": [AIMessage(content=full_response, name="planner")],
             "current_plan": full_response,
+            **updated_state_dict,
         },
         goto="human_feedback",
     )
@@ -251,29 +316,38 @@ def reporter_node(state: State):
     """Reporter node that write a final report."""
     logger.info("Reporter write final report")
     current_plan = state.get("current_plan")
+    
+    # --- Enhanced input for CppCheck context ---
+    cppcheck_details = {
+        "cppcheck_file": state.get("cppcheck_file"),
+        "cppcheck_line": state.get("cppcheck_line"),
+        "cppcheck_severity": state.get("cppcheck_severity"),
+        "cppcheck_id": state.get("cppcheck_id"),
+        "cppcheck_summary": state.get("cppcheck_summary"),
+        "source_code_context": state.get("source_code_context"), # From planner
+        "directory_tree": state.get("directory_tree") # From planner
+    }
+
     input_ = {
         "messages": [
             HumanMessage(
-                f"# Research Requirements\n\n## Task\n\n{current_plan.title}\n\n## Description\n\n{current_plan.thought}"
+                f"# Original Task for Plan\n\n## Title\n\n{current_plan.title if current_plan else 'N/A'}\n\n## Planner Thought Process\n\n{current_plan.thought if current_plan else 'N/A'}"
             )
         ],
         "locale": state.get("locale", "en-US"),
+        "current_plan_details": current_plan.model_dump() if hasattr(current_plan, 'model_dump') else str(current_plan),
+        "cppcheck_details": cppcheck_details,
+        "observations": state.get("observations", []) # These are execution results of plan steps
     }
+    # --- End of enhanced input ---
+
     invoke_messages = apply_prompt_template("reporter", input_)
-    observations = state.get("observations", [])
+    observations_from_state = state.get("observations", []) # Renamed to avoid conflict
 
-    # Add a reminder about the new report format, citation style, and table usage
-    invoke_messages.append(
-        HumanMessage(
-            content="IMPORTANT: Structure your report according to the format in the prompt. Remember to include:\n\n1. Key Points - A bulleted list of the most important findings\n2. Overview - A brief introduction to the topic\n3. Detailed Analysis - Organized into logical sections\n4. Survey Note (optional) - For more comprehensive reports\n5. Key Citations - List all references at the end\n\nFor citations, DO NOT include inline citations in the text. Instead, place all citations in the 'Key Citations' section at the end using the format: `- [Source Title](URL)`. Include an empty line between each citation for better readability.\n\nPRIORITIZE USING MARKDOWN TABLES for data presentation and comparison. Use tables whenever presenting comparative data, statistics, features, or options. Structure tables with clear headers and aligned columns. Example table format:\n\n| Feature | Description | Pros | Cons |\n|---------|-------------|------|------|\n| Feature 1 | Description 1 | Pros 1 | Cons 1 |\n| Feature 2 | Description 2 | Pros 2 | Cons 2 |",
-            name="system",
-        )
-    )
-
-    for observation in observations:
+    for observation_content in observations_from_state: # Use renamed variable
         invoke_messages.append(
             HumanMessage(
-                content=f"Below are some observations for the research task:\n\n{observation}",
+                content=f"Below are some observations (results from investigation steps) for the task:\n\n{observation_content}",
                 name="observation",
             )
         )

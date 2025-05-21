@@ -21,3 +21,14 @@ class State(MessagesState):
     auto_accepted_plan: bool = False
     enable_background_investigation: bool = True
     background_investigation_results: str = None
+
+    # CppCheck Input
+    cppcheck_file: str | None = None
+    cppcheck_line: int | None = None
+    cppcheck_severity: str | None = None
+    cppcheck_id: str | None = None
+    cppcheck_summary: str | None = None
+
+    # Context for Planner
+    source_code_context: str | None = None
+    directory_tree: str | None = None
