@@ -77,11 +77,22 @@ This document outlines the development plan to adapt the `deer-flow` codebase in
 *   **Objective:** Refine all relevant LLM prompts to support the new workflow and tasks.
 *   **Tasks:**
     *   **Review Existing Prompts:** ✅ Examined prompts in `src/prompts/` for all involved agents (Planner, Research Team, Reporter).
-    *   **Update Prompts:** ✅ Modified prompts to:
-        *   Handle the new CppCheck input format.
-        *   Guide LLMs to effectively use the new and modified tools.
-        *   Instruct LLMs to generate information needed for the `defect_type` and `defect_description` in the JSON summary.
-        *   Specifically updated the researcher.md and coder.md prompts with detailed instructions about the code analysis tools.
+    *   **Update Prompts:** ✅ Comprehensively refactored all prompt templates to specialize in CppCheck defect analysis:
+        *   **Planner Template**: Transformed into a Static Code Analysis Expert specialized in CppCheck defect analysis and false positive detection. Now processes CppCheck input context and source code context automatically.
+        *   **Researcher Template**: Refactored into a Code Investigation Specialist that uses specialized code analysis tools (ReadFileLinesTool, CodebaseSearchTool) and focuses on pattern analysis and evidence gathering.
+        *   **Coder Template**: Redesigned as a Code Analysis and Classification Expert that performs detailed code analysis, implements classification algorithms, and provides quantitative analysis for defect types.
+        *   **Reporter Template**: Enhanced to function as a Software Quality Analyst that writes comprehensive defect analysis reports with the required JSON summary format including `defect_type` and `defect_description`.
+    *   **Template System Enhancement:** ✅ Enhanced the template engine (`src/prompts/template.py`) with:
+        *   CppCheck context preparation and injection
+        *   Template variable validation
+        *   Improved error handling and type hints
+        *   Support for the four defect classification types: false_positive, style, perf, bug
+    *   **Documentation:** ✅ Created comprehensive documentation (`src/prompts/README.md`) covering:
+        *   Template overview and specializations
+        *   CppCheck context support
+        *   Defect classification system
+        *   Usage examples and best practices
+        *   Integration with the modified workflow
 
 ## 7. Configuration and Dependencies
 

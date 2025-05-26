@@ -139,6 +139,8 @@ async def run_cppcheck_analysis_async(
             raise ValueError(f"Line number must be an integer, got: {cppcheck_data['line']}")
 
     if debug:
+        print(graph.get_graph(xray=True).draw_mermaid())
+        print('='*100)
         enable_debug_logging()
 
     logger.info(f"Starting CppCheck analysis workflow for defect {cppcheck_data['id']} in {cppcheck_data['file']}:{cppcheck_data['line']}")
