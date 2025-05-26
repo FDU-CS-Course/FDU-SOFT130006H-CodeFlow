@@ -101,7 +101,11 @@ def planner_node(
             # In a real async graph, you might want to use _arun or make this part async
             file_reader_tool = ReadFileLinesTool()
             source_code_context = file_reader_tool.run(
-                file_path=file_path, start_line=start_line, end_line=end_line
+                tool_input = {
+                    "file_path": file_path,
+                    "start_line": start_line,
+                    "end_line": end_line
+                }
             )
             logger.info(f"Fetched source code context for {file_path}:{line}")
         except Exception as e:
