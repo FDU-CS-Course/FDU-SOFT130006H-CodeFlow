@@ -15,11 +15,9 @@ from langchain_core.messages import AIMessageChunk, ToolMessage, BaseMessage
 from langgraph.types import Command
 
 from src.graph.builder import build_graph_with_memory
-from src.ppt.graph.builder import build_graph as build_ppt_graph
 from src.server.chat_request import (
     ChatMessage,
     ChatRequest,
-    GeneratePPTRequest,
     TTSRequest,
 )
 from src.server.mcp_request import MCPServerMetadataRequest, MCPServerMetadataResponse
@@ -86,6 +84,7 @@ async def _astream_workflow_generator(
         "observations": [],
         "auto_accepted_plan": auto_accepted_plan,
         "enable_background_investigation": enable_background_investigation,
+        "locale": "en-US",  # Default locale previously set by coordinator
     }
     if not auto_accepted_plan and interrupt_feedback:
         resume_msg = f"[{interrupt_feedback}]"
@@ -220,26 +219,6 @@ async def text_to_speech(request: TTSRequest):
     except Exception as e:
         logger.exception(f"Error in TTS endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/api/ppt/generate")
-async def generate_ppt(request: GeneratePPTRequest):
-    try:
-        report_content = request.content
-        print(report_content)
-        workflow = build_ppt_graph()
-        final_state = workflow.invoke({"input": report_content})
-        generated_file_path = final_state["generated_file_path"]
-        with open(generated_file_path, "rb") as f:
-            ppt_bytes = f.read()
-        return Response(
-            content=ppt_bytes,
-            media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-        )
-    except Exception as e:
-        logger.exception(f"Error occurred during ppt generation: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
 
 @app.post("/api/mcp/server/metadata", response_model=MCPServerMetadataResponse)
 async def mcp_server_metadata(request: MCPServerMetadataRequest):

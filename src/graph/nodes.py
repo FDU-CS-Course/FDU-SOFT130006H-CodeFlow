@@ -19,6 +19,7 @@ from src.tools import (
     get_web_search_tool,
     python_repl_tool,
     ReadFileLinesTool,
+    CodebaseSearchTool,
 )
 
 from src.config.agents import AGENT_LLM_MAP
@@ -546,7 +547,12 @@ async def researcher_node(
         state,
         config,
         "researcher",
-        [get_web_search_tool(configurable.max_search_results), crawl_tool],
+        [
+            get_web_search_tool(configurable.max_search_results), 
+            crawl_tool,
+            ReadFileLinesTool(),
+            CodebaseSearchTool()
+        ],
     )
 
 
@@ -559,5 +565,9 @@ async def coder_node(
         state,
         config,
         "coder",
-        [python_repl_tool],
+        [
+            python_repl_tool,
+            ReadFileLinesTool(),
+            CodebaseSearchTool()
+        ],
     )

@@ -114,25 +114,6 @@ interface Plan {
 }
 ```
 
-# Input Data Example (for your reference during generation)
-
-```json
-{
-  "messages": [
-    { "role": "user", "content": "Investigate this CppCheck finding." }
-  ],
-  "locale": "en-US",
-  "cppcheck_file": "src/utils/network.c",
-  "cppcheck_line": 123,
-  "cppcheck_severity": "error",
-  "cppcheck_id": "nullPointer",
-  "cppcheck_summary": "Null pointer dereference of 'sock'",
-  "source_code_context": "...", // actual code snippet
-  "directory_tree": "...", // actual directory tree
-  "background_investigation_results": null // or some pre-researched string
-}
-```
-
 # Notes
 
 *   Your primary goal is to create a plan for *investigation*, not to solve the defect yourself.
