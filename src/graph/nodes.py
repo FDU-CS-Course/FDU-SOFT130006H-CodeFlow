@@ -377,6 +377,7 @@ def research_team_node(
     for step in current_plan.steps:
         if not step.execution_res:
             break
+    logger.debug(f"Current plan: {current_plan}")
     if step.step_type and step.step_type == StepType.RESEARCH:
         return Command(goto="researcher")
     if step.step_type and step.step_type == StepType.PROCESSING:

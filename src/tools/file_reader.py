@@ -1,10 +1,12 @@
 """Tool for reading specific lines from a file."""
 from typing import Optional, Type
+import logging
 
 from langchain_core.callbacks import CallbackManagerForToolRun
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 from langchain_core.tools import BaseTool
 
+logger = logging.getLogger(__name__)
 
 def read_lines_from_file(file_path: str, start_line: int, end_line: int) -> str:
     """
@@ -18,9 +20,12 @@ def read_lines_from_file(file_path: str, start_line: int, end_line: int) -> str:
     Returns:
         The content of the specified lines, or an error message.
     """
+    logger.debug(f"Reading lines from {file_path} from {start_line} to {end_line}")
     if start_line <= 0 or end_line <= 0:
+        logger.error(f"Error: Line numbers must be positive. start_line: {start_line}, end_line: {end_line}")
         return "Error: Line numbers must be positive."
     if start_line > end_line:
+        logger.error(f"Error: Start line cannot be greater than end line. start_line: {start_line}, end_line: {end_line}")
         return "Error: Start line cannot be greater than end line."
 
     try:
@@ -38,10 +43,14 @@ def read_lines_from_file(file_path: str, start_line: int, end_line: int) -> str:
         actual_end_idx = min(end_idx, len(lines))
         
         selected_lines = lines[start_idx:actual_end_idx]
+        # logger.debug(f"Selected lines: {selected_lines}")
+        logger.debug(f"{len(selected_lines)} lines selected")
         return "".join(selected_lines)
     except FileNotFoundError:
+        logger.error(f"Error: File not found at {file_path}")
         return f"Error: File not found at {file_path}"
     except Exception as e:
+        logger.error(f"An error occurred: {str(e)}")
         return f"An error occurred: {str(e)}"
 
 

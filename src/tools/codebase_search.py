@@ -2,11 +2,13 @@
 import subprocess
 import asyncio
 from typing import List, Optional, Type
+import logging
 
 from langchain_core.callbacks import CallbackManagerForToolRun
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 from langchain_core.tools import BaseTool
 
+logger = logging.getLogger(__name__)
 
 def search_with_ripgrep(query: str, path: str = ".", file_types: Optional[List[str]] = None) -> str:
     """
@@ -20,6 +22,8 @@ def search_with_ripgrep(query: str, path: str = ".", file_types: Optional[List[s
     Returns:
         The search results from ripgrep, or an error message.
     """
+    logger.debug(f"Searching for {query} in {path} with file types {file_types}")
+    assert path is not None, "Path must be provided"
     command = ["rg", "--json", "--context", "3", "--max-count", "50"]
 
     if file_types:
@@ -34,14 +38,19 @@ def search_with_ripgrep(query: str, path: str = ".", file_types: Optional[List[s
         stdout, stderr = process.communicate()
 
         if process.returncode == 0:
+            logger.info(f"Search results: {stdout}")
             return stdout # ripgrep with --json outputs one JSON object per line for each match
         elif process.returncode == 1: # No matches found
+            logger.warning(f"No matches found for query: {query} in path: {path}")
             return "No matches found."
         else:
+            logger.error(f"Ripgrep error (return code {process.returncode}):\n{stderr}")
             return f"Ripgrep error (return code {process.returncode}):\n{stderr}"
     except FileNotFoundError:
+        logger.error("Error: ripgrep command not found. Please ensure ripgrep is installed and in your PATH.")
         return "Error: ripgrep command not found. Please ensure ripgrep is installed and in your PATH."
     except Exception as e:
+        logger.error(f"An error occurred during search: {str(e)}")
         return f"An error occurred during search: {str(e)}"
 
 
@@ -57,6 +66,9 @@ async def search_with_ripgrep_async(query: str, path: str = ".", file_types: Opt
     Returns:
         The search results from ripgrep, or an error message.
     """
+    logger.debug(f"Searching for {query} in {path} with file types {file_types}")
+    assert path is not None, "Path must be provided"
+    
     command = ["rg", "--json", "--context", "3", "--max-count", "50"]
 
     if file_types:
@@ -76,22 +88,26 @@ async def search_with_ripgrep_async(query: str, path: str = ".", file_types: Opt
         stdout = stdout_bytes.decode()
         stderr = stderr_bytes.decode()
 
-        if process.returncode == 0:
+        if process.returncode == 0: # Success
             return stdout # ripgrep with --json outputs one JSON object per line for each match
         elif process.returncode == 1: # No matches found
+            logger.warning(f"No matches found for query: {query} in path: {path}")
             return "No matches found."
         else:
+            logger.error(f"Ripgrep error (return code {process.returncode}):\n{stderr}")
             return f"Ripgrep error (return code {process.returncode}):\n{stderr}"
     except FileNotFoundError:
+        logger.error("Error: ripgrep command not found. Please ensure ripgrep is installed and in your PATH.")
         return "Error: ripgrep command not found. Please ensure ripgrep is installed and in your PATH."
     except Exception as e:
+        logger.error(f"An error occurred during async search: {str(e)}")
         return f"An error occurred during async search: {str(e)}"
 
 
 class CodebaseSearchInput(BaseModel):
     """Input for CodebaseSearchTool."""
     query: str = Field(description="The exact string or regex pattern to search for.")
-    path: str = Field(default=".", description="The directory or file path to search within. Defaults to the current directory.")
+    path: str = Field(default='.', description="The directory or file path to search within. Defaults to the current directory.")
     file_types: Optional[List[str]] = Field(default=None, description="Optional list of file extensions to filter by (e.g., ['py', 'js']).")
 
 class CodebaseSearchTool(BaseTool):
