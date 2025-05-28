@@ -34,6 +34,9 @@ from ..config import SELECTED_SEARCH_ENGINE, SearchEngine
 
 logger = logging.getLogger(__name__)
 
+import os
+PROJECT_ROOT = os.getenv("CPPCHECK_PROJECT_DIR", None)
+assert PROJECT_ROOT is not None, "CPPCHECK_PROJECT_DIR must be set"
 
 @tool
 def handoff_to_planner(
@@ -87,6 +90,9 @@ def planner_node(
     logger.info("Planner generating full plan")
     configurable = Configuration.from_runnable_config(config)
     plan_iterations = state["plan_iterations"] if state.get("plan_iterations", 0) else 0
+    
+    # Add PROJECT_ROOT to the state
+    state["PROJECT_ROOT"] = PROJECT_ROOT
 
     # --- New logic for CppCheck input and context gathering ---
     source_code_context = ""
@@ -154,6 +160,8 @@ def planner_node(
     # --- End of new logic ---
 
     messages = apply_prompt_template("planner", {**state, **updated_state_dict}, configurable)
+    
+    logger.debug(f"Planner messages: {messages}")
 
     if (
         plan_iterations == 0

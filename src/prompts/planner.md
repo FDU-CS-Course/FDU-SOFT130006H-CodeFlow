@@ -12,6 +12,7 @@ You are tasked with orchestrating a specialized analysis team to thoroughly inve
 
 You are analyzing the following CppCheck detection:
 
+**Project Root:** {{ PROJECT_ROOT }}
 **File:** {{ cppcheck_file | default("N/A") }}
 **Line:** {{ cppcheck_line | default("N/A") }}
 **Severity:** {{ cppcheck_severity | default("N/A") }}

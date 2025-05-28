@@ -10,7 +10,11 @@ from langchain_core.tools import BaseTool
 
 logger = logging.getLogger(__name__)
 
-def search_with_ripgrep(query: str, path: str = ".", file_types: Optional[List[str]] = None) -> str:
+import os
+PROJECT_ROOT = os.getenv("CPPCHECK_PROJECT_DIR", None)
+assert PROJECT_ROOT is not None, "CPPCHECK_PROJECT_DIR must be set"
+
+def search_with_ripgrep(query: str, path: str = PROJECT_ROOT, file_types: Optional[List[str]] = None) -> str:
     """
     Searches for an exact string or regex pattern in a given path using ripgrep.
 
@@ -22,8 +26,10 @@ def search_with_ripgrep(query: str, path: str = ".", file_types: Optional[List[s
     Returns:
         The search results from ripgrep, or an error message.
     """
+    # Verify that path is inside PROJECT_ROOT
+    if not path.startswith(PROJECT_ROOT):
+        path = os.path.join(PROJECT_ROOT, path)
     logger.debug(f"Searching for {query} in {path} with file types {file_types}")
-    assert path is not None, "Path must be provided"
     command = ["rg", "--json", "--context", "3", "--max-count", "50"]
 
     if file_types:
@@ -38,7 +44,7 @@ def search_with_ripgrep(query: str, path: str = ".", file_types: Optional[List[s
         stdout, stderr = process.communicate()
 
         if process.returncode == 0:
-            logger.info(f"Search results: {stdout}")
+            logger.debug(f"Length of stdout: {len(stdout)}")
             return stdout # ripgrep with --json outputs one JSON object per line for each match
         elif process.returncode == 1: # No matches found
             logger.warning(f"No matches found for query: {query} in path: {path}")
@@ -54,7 +60,7 @@ def search_with_ripgrep(query: str, path: str = ".", file_types: Optional[List[s
         return f"An error occurred during search: {str(e)}"
 
 
-async def search_with_ripgrep_async(query: str, path: str = ".", file_types: Optional[List[str]] = None) -> str:
+async def search_with_ripgrep_async(query: str, path: str = PROJECT_ROOT, file_types: Optional[List[str]] = None) -> str:
     """
     Asynchronously searches for an exact string or regex pattern in a given path using ripgrep.
 
@@ -66,8 +72,9 @@ async def search_with_ripgrep_async(query: str, path: str = ".", file_types: Opt
     Returns:
         The search results from ripgrep, or an error message.
     """
+    if not path.startswith(PROJECT_ROOT):
+        path = os.path.join(PROJECT_ROOT, path)
     logger.debug(f"Searching for {query} in {path} with file types {file_types}")
-    assert path is not None, "Path must be provided"
     
     command = ["rg", "--json", "--context", "3", "--max-count", "50"]
 
@@ -89,6 +96,7 @@ async def search_with_ripgrep_async(query: str, path: str = ".", file_types: Opt
         stderr = stderr_bytes.decode()
 
         if process.returncode == 0: # Success
+            logger.debug(f"Length of stdout: {len(stdout)}")
             return stdout # ripgrep with --json outputs one JSON object per line for each match
         elif process.returncode == 1: # No matches found
             logger.warning(f"No matches found for query: {query} in path: {path}")
@@ -107,7 +115,7 @@ async def search_with_ripgrep_async(query: str, path: str = ".", file_types: Opt
 class CodebaseSearchInput(BaseModel):
     """Input for CodebaseSearchTool."""
     query: str = Field(description="The exact string or regex pattern to search for.")
-    path: str = Field(default='.', description="The directory or file path to search within. Defaults to the current directory.")
+    path: str = Field(default=PROJECT_ROOT, description="The directory or file path to search within. Defaults to the project root directory.")
     file_types: Optional[List[str]] = Field(default=None, description="Optional list of file extensions to filter by (e.g., ['py', 'js']).")
 
 class CodebaseSearchTool(BaseTool):
@@ -124,7 +132,7 @@ class CodebaseSearchTool(BaseTool):
     def _run(
         self,
         query: str,
-        path: str = ".",
+        path: str = PROJECT_ROOT,
         file_types: Optional[List[str]] = None,
         run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> str:
@@ -134,7 +142,7 @@ class CodebaseSearchTool(BaseTool):
     async def _arun(
         self,
         query: str,
-        path: str = ".",
+        path: str = PROJECT_ROOT,
         file_types: Optional[List[str]] = None,
         run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> str:
