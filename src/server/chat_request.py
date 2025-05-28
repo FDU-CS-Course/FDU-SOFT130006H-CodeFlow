@@ -55,21 +55,33 @@ class ChatRequest(BaseModel):
     )
 
 
-class TTSRequest(BaseModel):
-    text: str = Field(..., description="The text to convert to speech")
-    voice_type: Optional[str] = Field(
-        "BV700_V2_streaming", description="The voice type to use"
-    )
-    encoding: Optional[str] = Field("mp3", description="The audio encoding format")
-    speed_ratio: Optional[float] = Field(1.0, description="Speech speed ratio")
-    volume_ratio: Optional[float] = Field(1.0, description="Speech volume ratio")
-    pitch_ratio: Optional[float] = Field(1.0, description="Speech pitch ratio")
-    text_type: Optional[str] = Field("plain", description="Text type (plain or ssml)")
-    with_frontend: Optional[int] = Field(
-        1, description="Whether to use frontend processing"
-    )
-    frontend_type: Optional[str] = Field("unitTson", description="Frontend type")
+class CppCheckData(BaseModel):
+    """Model for CppCheck defect data."""
+    file: str = Field(..., description="Path to the file with the defect")
+    line: int = Field(..., description="Line number of the defect")
+    severity: str = Field(..., description="Severity of the defect")
+    id: str = Field(..., description="Defect ID from CppCheck")
+    summary: str = Field(..., description="CppCheck's summary of the defect")
 
 
-class GeneratePPTRequest(BaseModel):
-    content: str = Field(..., description="The content of the ppt")
+class CppCheckRequest(BaseModel):
+    """Request model for CppCheck defect analysis."""
+    cppcheck_data: CppCheckData = Field(..., description="CppCheck defect information")
+    debug: Optional[bool] = Field(False, description="Whether to enable debug logging")
+    thread_id: Optional[str] = Field(
+        "__default__", description="A specific conversation identifier"
+    )
+    max_plan_iterations: Optional[int] = Field(
+        1, description="The maximum number of plan iterations"
+    )
+    max_step_num: Optional[int] = Field(
+        3, description="The maximum number of steps in a plan"
+    )
+    auto_accepted_plan: Optional[bool] = Field(
+        True, description="Whether to automatically accept the plan"
+    )
+    enable_background_investigation: Optional[bool] = Field(
+        False, description="Whether to enable background investigation before plan"
+    )
+
+

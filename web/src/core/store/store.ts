@@ -6,8 +6,8 @@ import { toast } from "sonner";
 import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 
-import { chatStream, generatePodcast } from "../api";
-import type { Message } from "../messages";
+import { chatStream, cppCheckAnalysisStream, generatePodcast } from "../api";
+import type { CppCheckData, Message } from "../messages";
 import { mergeMessage } from "../messages";
 import { parseJSON } from "../utils";
 
@@ -142,6 +142,83 @@ export async function sendMessage(
     toast("An error occurred while generating the response. Please try again.");
     // Update message status.
     // TODO: const isAborted = (error as Error).name === "AbortError";
+    if (messageId != null) {
+      const message = getMessage(messageId);
+      if (message?.isStreaming) {
+        message.isStreaming = false;
+        useStore.getState().updateMessage(message);
+      }
+    }
+    useStore.getState().setOngoingResearch(null);
+  } finally {
+    setResponding(false);
+  }
+}
+
+export async function sendCppCheckAnalysis(
+  cppCheckData: CppCheckData,
+  options: { abortSignal?: AbortSignal } = {},
+) {
+  // Format the CppCheck data as a user message for display
+  const userMessageContent = `Analyze CppCheck defect:
+File: ${cppCheckData.file}
+Line: ${cppCheckData.line}
+Severity: ${cppCheckData.severity}
+ID: ${cppCheckData.id}
+Summary: ${cppCheckData.summary}`;
+
+  // Add the user message to the UI
+  appendMessage({
+    id: nanoid(),
+    threadId: THREAD_ID,
+    role: "user",
+    content: userMessageContent,
+    contentChunks: [userMessageContent],
+  });
+
+  const settings = getChatStreamSettings();
+  const stream = cppCheckAnalysisStream(
+    cppCheckData,
+    {
+      thread_id: THREAD_ID,
+      auto_accepted_plan: settings.autoAcceptedPlan,
+      max_plan_iterations: settings.maxPlanIterations,
+      max_step_num: settings.maxStepNum,
+      enable_background_investigation: false, // Typically not needed for code analysis
+    },
+    options,
+  );
+
+  setResponding(true);
+  let messageId: string | undefined;
+  try {
+    for await (const event of stream) {
+      const { type, data } = event;
+      messageId = data.id;
+      let message: Message | undefined;
+      if (type === "tool_call_result") {
+        message = findMessageByToolCallId(data.tool_call_id);
+      } else if (!existsMessage(messageId)) {
+        message = {
+          id: messageId,
+          threadId: data.thread_id,
+          agent: data.agent,
+          role: data.role,
+          content: "",
+          contentChunks: [],
+          isStreaming: true,
+        };
+        appendMessage(message);
+      }
+      message ??= getMessage(messageId);
+      if (message) {
+        message = mergeMessage(message, event);
+        updateMessage(message);
+      }
+    }
+  } catch (error) {
+    console.error("Error during CppCheck analysis:", error);
+    toast("An error occurred during defect analysis. Please try again.");
     if (messageId != null) {
       const message = getMessage(messageId);
       if (message?.isStreaming) {

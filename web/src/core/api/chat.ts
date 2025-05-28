@@ -9,7 +9,7 @@ import { fetchStream } from "../sse";
 import { sleep } from "../utils";
 
 import { resolveServiceURL } from "./resolve-service-url";
-import type { ChatEvent } from "./types";
+import type { ChatEvent, CppCheckData } from "./types";
 
 export async function* chatStream(
   userMessage: string,
@@ -47,6 +47,49 @@ export async function* chatStream(
     }),
     signal: options.abortSignal,
   });
+  for await (const event of stream) {
+    yield {
+      type: event.event,
+      data: JSON.parse(event.data),
+    } as ChatEvent;
+  }
+}
+
+export async function* cppCheckAnalysisStream(
+  cppCheckData: CppCheckData,
+  params: {
+    thread_id: string;
+    auto_accepted_plan: boolean;
+    max_plan_iterations: number;
+    max_step_num: number;
+    enable_background_investigation: boolean;
+  },
+  options: { abortSignal?: AbortSignal } = {},
+) {
+  if (
+    env.NEXT_PUBLIC_STATIC_WEBSITE_ONLY ||
+    location.search.includes("mock") ||
+    location.search.includes("replay=")
+  ) {
+    // For mock mode, fall back to regular chat
+    const mockMessage = `Analyze this CppCheck defect: ${cppCheckData.file}:${cppCheckData.line} - ${cppCheckData.id}`;
+    return yield* chatReplayStream(mockMessage, params, options);
+  }
+  
+  const stream = fetchStream(resolveServiceURL("cppcheck/analyze"), {
+    body: JSON.stringify({
+      cppcheck_data: {
+        file: cppCheckData.file,
+        line: parseInt(cppCheckData.line),
+        severity: cppCheckData.severity,
+        id: cppCheckData.id,
+        summary: cppCheckData.summary,
+      },
+      ...params,
+    }),
+    signal: options.abortSignal,
+  });
+  
   for await (const event of stream) {
     yield {
       type: event.event,

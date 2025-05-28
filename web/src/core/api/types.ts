@@ -3,6 +3,15 @@
 
 import type { Option } from "../messages";
 
+// CppCheck analysis type
+export interface CppCheckData {
+  file: string;
+  line: string;
+  severity: string;
+  id: string;
+  summary: string;
+}
+
 // Tool Calls
 
 export interface ToolCall {

@@ -71,6 +71,8 @@ Before creating a detailed plan, assess if there is sufficient context to classi
      - The code's purpose and intended behavior are clear
      - Related code patterns and dependencies are understood
      - No additional investigation is needed for classification
+   - When `has_enough_context` is true, the research phase is skipped and we directly proceed to reporting.
+     - If any further investigation is needed, set `has_enough_context` to false.
 
 2. **Insufficient Context** (default assumption):
    - Set `has_enough_context` to false if ANY condition exists:

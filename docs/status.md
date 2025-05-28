@@ -7,6 +7,7 @@ This document provides an overview of the `src/` directory structure and design,
 *   **`src/workflow.py`**: Defines and runs the main asynchronous agent workflow.
     *   Uses `src.graph.build_graph()` to get the compiled agent graph.
     *   `run_agent_workflow_async()` is the primary entry point for executing the workflow with user input and configurations.
+    *   `run_cppcheck_analysis_async()` is the dedicated entry point for CppCheck defect analysis workflow.
     *   Handles streaming of results from the graph.
 *   **`src/graph/`**: Contains the LangGraph-based graph definition.
     *   **`builder.py`**: Builds the `StateGraph`.
@@ -17,7 +18,8 @@ This document provides an overview of the `src/` directory structure and design,
         *   Nodes include: `coordinator_node`, `planner_node`, `research_team_node`, `researcher_node`, `coder_node`, `reporter_node`, `human_feedback_node`, `background_investigation_node`.
         *   Nodes interact with LLMs, tools, and manage the `State`.
         *   Uses helper functions like `_execute_agent_step` for agent execution.
-    *   **`types.py`**: Defines the `State` class (inheriting from `MessagesState`) which is the shared state object passed between graph nodes. It includes fields for messages, plan, observations, locale, etc.
+        *   Enhanced `planner_node` now fetches source code context and directory tree for CppCheck analysis.
+    *   **`types.py`**: Defines the `State` class (inheriting from `MessagesState`) which is the shared state object passed between graph nodes. It includes fields for messages, plan, observations, locale, and CppCheck-specific fields.
 
 ## Agents (`src/agents/`)
 
@@ -44,7 +46,9 @@ This document provides an overview of the `src/` directory structure and design,
 *   Manages prompt templates for LLMs.
 *   **`template.py`**: Uses Jinja2 to load and render prompt templates.
     *   `apply_prompt_template()`: Takes a prompt name and the current agent `State`, renders the template, and prepends it as a system message to the existing conversation messages.
+    *   `prepare_cppcheck_context()`: Prepares CppCheck-specific context variables for template rendering.
 *   **`.md` files** (e.g., `planner.md`, `researcher.md`): Contain the actual Jinja2 prompt templates for different agents/nodes.
+    *   Enhanced with CppCheck-specific context and instructions.
 *   **`planner_model.py`**: Defines a Pydantic model `Plan` for structured output from the planner LLM.
 *   The subdirectories for specialized tasks like `podcast/`, `ppt/`, and `prose/` have been removed as they are not relevant to the current defect analysis goals.
 
@@ -68,8 +72,11 @@ This document provides an overview of the `src/` directory structure and design,
 ## Server (`src/server/`)
 
 *   Contains code for an API server.
-*   **`app.py`**: Likely the main application file for a FastAPI/Flask server.
-*   Includes modules for handling chat requests (`chat_request.py`) and MCP (Multi-Server Client Protocol) requests (`mcp_request.py`, `mcp_utils.py`). This suggests the server can expose the agent workflow via an API and potentially interact with other tool servers.
+*   **`app.py`**: Main FastAPI application with endpoints for chat and CppCheck analysis.
+    *   `/api/chat/stream`: Original chat endpoint for general queries.
+    *   `/api/cppcheck/analyze`: New endpoint for CppCheck defect analysis with streaming responses.
+*   **`chat_request.py`**: Request models including `ChatRequest` and `CppCheckRequest` for API endpoints.
+*   Includes modules for handling MCP (Multi-Server Client Protocol) requests (`mcp_request.py`, `mcp_utils.py`). This suggests the server can expose the agent workflow via an API and potentially interact with other tool servers.
 
 ## Utilities (`src/utils/`)
 
@@ -79,12 +86,36 @@ This document provides an overview of the `src/` directory structure and design,
 
 *   The specialized modules from the original `deer-flow` (`src/prose/`, `src/podcast/`, `src/ppt/`) designed for specific content generation tasks (prose, podcasts, PowerPoint presentations) have been removed as they are not aligned with the new defect analysis objectives.
 
+## CppCheck Integration
+
+*   **Backend API**: New `/api/cppcheck/analyze` endpoint accepts CppCheck defect data with the following structure:
+    ```json
+    {
+      "cppcheck_data": {
+        "file": "string",
+        "line": "integer", 
+        "severity": "string",
+        "id": "string",
+        "summary": "string"
+      }
+    }
+    ```
+*   **Frontend Integration**: 
+    *   Input box supports switching between text and CppCheck input modes
+    *   CppCheck form provides structured fields for defect information
+    *   Dedicated streaming API integration for real-time analysis results
+*   **Workflow Enhancement**: 
+    *   Planner automatically fetches source code context around defect line
+    *   Enhanced prompts provide CppCheck-specific context to analysis agents
+    *   Reporter generates structured defect classification with JSON summary
+
 ## Overall Design
 
 *   The system is built around **LangGraph**, orchestrating a flow of state through different nodes (agents/logic blocks).
 *   **Agents** are created using a ReAct pattern, equipped with LLMs and tools.
-*   **Prompts** are managed using Jinja2 templates.
+*   **Prompts** are managed using Jinja2 templates with CppCheck-specific context preparation.
 *   **Configuration** is loaded from YAML files (primarily `conf.yaml`) and environment variables, with specific classes and mappings in `src/config/`.
-*   **Tools** are modular and can be assigned to agents.
-*   The project includes a **server component** to expose functionality via an API.
+*   **Tools** are modular and can be assigned to agents, with specialized tools for code analysis.
+*   The project includes a **server component** to expose functionality via REST API with dedicated CppCheck endpoints.
+*   **Frontend** provides intuitive interface for both general queries and structured CppCheck defect analysis.
 *   The codebase is generally well-structured with clear separation of concerns (graph logic, agent creation, tools, prompts, LLM management, configuration).

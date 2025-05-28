@@ -35,3 +35,11 @@ export interface ToolCallRuntime {
   argsChunks?: string[];
   result?: string;
 }
+
+export interface CppCheckData {
+  file: string;
+  line: string;
+  severity: string;
+  id: string;
+  summary: string;
+}

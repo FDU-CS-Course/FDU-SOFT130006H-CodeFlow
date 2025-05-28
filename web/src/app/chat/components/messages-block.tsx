@@ -15,9 +15,9 @@ import {
 } from "~/components/ui/card";
 import { fastForwardReplay } from "~/core/api";
 import { useReplayMetadata } from "~/core/api/hooks";
-import type { Option } from "~/core/messages";
+import type { Option, CppCheckData } from "~/core/messages";
 import { useReplay } from "~/core/replay";
-import { sendMessage, useMessageIds, useStore } from "~/core/store";
+import { sendMessage, sendCppCheckAnalysis, useMessageIds, useStore } from "~/core/store";
 import { env } from "~/env";
 import { cn } from "~/lib/utils";
 
@@ -67,6 +67,18 @@ export function MessagesBlock({ className }: { className?: string }) {
   const handleRemoveFeedback = useCallback(() => {
     setFeedback(null);
   }, [setFeedback]);
+  const handleSendCppCheck = useCallback(
+    async (cppCheckData: CppCheckData) => {
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+      try {
+        await sendCppCheckAnalysis(cppCheckData, {
+          abortSignal: abortController.signal,
+        });
+      } catch {}
+    },
+    [],
+  );
   const handleStartReplay = useCallback(() => {
     setReplayStarted(true);
     void sendMessage();
@@ -96,6 +108,7 @@ export function MessagesBlock({ className }: { className?: string }) {
             responding={responding}
             feedback={feedback}
             onSend={handleSend}
+            onSendCppCheck={handleSendCppCheck}
             onCancel={handleCancel}
             onRemoveFeedback={handleRemoveFeedback}
           />
