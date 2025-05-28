@@ -8,6 +8,10 @@ from langchain_core.tools import BaseTool
 
 logger = logging.getLogger(__name__)
 
+import os
+PROJECT_ROOT = os.getenv("CPPCHECK_PROJECT_DIR", None)
+assert PROJECT_ROOT is not None, "CPPCHECK_PROJECT_DIR must be set"
+
 def read_lines_from_file(file_path: str, start_line: int, end_line: int) -> str:
     """
     Reads specified lines from a file.
@@ -20,6 +24,8 @@ def read_lines_from_file(file_path: str, start_line: int, end_line: int) -> str:
     Returns:
         The content of the specified lines, or an error message.
     """
+    if not file_path.startswith(PROJECT_ROOT):
+        file_path = os.path.join(PROJECT_ROOT, file_path)
     logger.debug(f"Reading lines from {file_path} from {start_line} to {end_line}")
     if start_line <= 0 or end_line <= 0:
         logger.error(f"Error: Line numbers must be positive. start_line: {start_line}, end_line: {end_line}")
