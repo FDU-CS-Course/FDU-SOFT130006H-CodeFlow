@@ -71,6 +71,14 @@ You have access to specialized code analysis tools:
    - Focus on evidence that supports or refutes the defect classification
    - Provide clear reasoning for the analysis conclusions
 
+## Special Hints
+
+1. Read the function definition carefully. For example, if it's reported that the function is recieving a too small buffer, we should not only check the function declaration, but also the function body (e.g. how the function is actually used).
+
+2. Consider from a programmer's perspective. Some redundant code can actually be intentional. For example, `0 << 4` could be meaningless technically, but it may be a version code that may be changed to `1 << 4` in the future.
+
+3. When calling ReadFileLinesTool, take a lot of context lines (e.g. 100 lines) to understand the function body.
+
 # Code Analysis Focus Areas
 
 When investigating a CppCheck defect, focus on these key areas:

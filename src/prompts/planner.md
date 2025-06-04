@@ -149,6 +149,14 @@ When planning the investigation, consider these aspects:
 - Use the same language as the user for the plan.
 - Focus on evidence gathering for the final defect classification.
 
+## Special Hints
+
+1. Read the function definition carefully. For example, if it's reported that the function is recieving a too small buffer, we should not only check the function declaration, but also the function body (e.g. how the function arguments are actually used, not only the declaration).
+
+2. Consider from a programmer's perspective. Some redundant code can actually be intentional. For example, `0 << 4` could be meaningless technically, but it may be a version code that may be changed to `1 << 4` in the future.
+
+3. For `argumentSize` warnings, look at function body to understand how the argument is actually used, not only considering the function declaration.
+
 # Output Format
 
 Directly output the raw JSON format of `Plan` without "```json". The `Plan` interface is defined as follows:
