@@ -136,6 +136,20 @@ def parse_cppcheck_args(args):
         except (json.JSONDecodeError, FileNotFoundError) as e:
             print(f"Error loading CppCheck JSON file: {e}")
             sys.exit(1)
+    elif args.cppcheck_inline_csv:
+        try:
+            # Parse inline CSV string
+            file, line, severity, id_, summary = args.cppcheck_inline_csv.split(',', 5)
+            return {
+                'file': file,
+                'line': line,
+                'severity': severity,
+                'id': id_,
+                'summary': summary
+            }
+        except Exception as e:
+            print(f"Error parsing inline CppCheck CSV: {e}")
+            sys.exit(1)
     elif args.cppcheck_inline:
         try:
             # Parse inline JSON string
@@ -183,6 +197,7 @@ if __name__ == "__main__":
     # Three ways to provide CppCheck data
     cppcheck_group = cppcheck_parser.add_mutually_exclusive_group(required=True)
     cppcheck_group.add_argument("--cppcheck-json", help="Path to JSON file containing CppCheck data")
+    cppcheck_group.add_argument("--cppcheck-inline-csv", help="Inline CSV string containing CppCheck data")
     cppcheck_group.add_argument("--cppcheck-inline", help="Inline JSON string containing CppCheck data")
     
     # Individual CppCheck fields (alternative to JSON)
