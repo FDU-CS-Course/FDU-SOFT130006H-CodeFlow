@@ -9,6 +9,9 @@ This script evaluates the accuracy, F1 score, and recall between the 'baseline'
 and 'severity' columns in the CppCheck CSV file. It maps 'warning' and 'error' 
 from severity to 'bug' for comparison with baseline.
 
+The script automatically filters out records where the baseline is marked as 
+'false_positive' before performing the analysis.
+
 This version uses only standard Python libraries.
 """
 
@@ -440,13 +443,36 @@ def main():
         # Ask user if they want to filter out unknown baseline values
         print(f"\nFound {baseline_dist_before.get('unknown', 0)} records with unknown baseline values.")
         
-        # For now, let's include unknown values in the analysis instead of filtering them out
-        # We can treat 'unknown' as a separate category for comparison
-        print("Including all records in analysis (treating 'unknown' as a separate category)...")
+        # Filter out false_positive records from baseline before analysis
+        original_len = len(data)
+        data_filtered = []
+        false_positive_count = 0
+        
+        for record in data:
+            original_baseline = record.get('Baseline', '').lower().strip()
+            if original_baseline == 'false_positive':
+                false_positive_count += 1
+            else:
+                data_filtered.append(record)
+        
+        data = data_filtered
+        
+        print(f"\nFiltered out {false_positive_count} records marked as 'false_positive' in baseline.")
+        print(f"Remaining records for analysis: {len(data)} (was {original_len})")
         
         if len(data) == 0:
-            print("No valid records found. Exiting.")
+            print("No valid records found after filtering. Exiting.")
             sys.exit(1)
+        
+        # Update distributions after filtering
+        baseline_dist_after = Counter(record['cleaned_baseline'] for record in data)
+        print(f"\nBaseline value distribution after filtering:")
+        for baseline, count in baseline_dist_after.most_common():
+            print(f"  '{baseline}': {count}")
+        
+        # For now, let's include unknown values in the analysis instead of filtering them out
+        # We can treat 'unknown' as a separate category for comparison
+        print("\nIncluding all remaining records in analysis (treating 'unknown' as a separate category)...")
         
         # Prepare data for metrics calculation
         y_true = [record['mapped_severity'] for record in data]
