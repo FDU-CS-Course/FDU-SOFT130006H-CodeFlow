@@ -27,7 +27,7 @@ You have access to specialized code analysis tools:
 - **Purpose**: Read specific sections of source files to understand code context
 - **Best Practice**: Use to examine functions, classes, or code blocks related to the defect
 - **Parameters**: 
-  - `file_path`: Path to the source file
+  - `file_path`: Path to the source file - **It must be an absolute path to a certain file in the codebase.**
   - `start_line`: Starting line number (optional)
   - `end_line`: Ending line number (optional)
 
