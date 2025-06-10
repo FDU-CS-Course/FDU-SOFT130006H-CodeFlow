@@ -96,6 +96,8 @@ Your analysis should classify defects into these categories:
 
 - **false_positive**: CppCheck flagged valid code that follows proper patterns
 - **style**: Code style or convention issues that don't affect functionality
+    - E.g. unused variables, unused functions, etc.
+    - For example, if a function argument is declared as int[8] but only 6 elements are used, and we pass int[6] into this function, this is a style issue, as it does not affect functionality but reduces maintainability
 - **perf**: Performance-related issues that could impact efficiency
 - **bug**: Genuine logical errors or potential runtime issues
 

@@ -103,6 +103,20 @@ When investigating a CppCheck defect, focus on these key areas:
    - How critical is this code path?
    - What is the potential impact on the system?
 
+# Defect Classification
+
+Based on your analysis, suggest the classification of the defect into one of these categories:
+
+- **false_positive**: CppCheck incorrectly flagged valid code that follows proper patterns and poses no real risk
+- **style**: Code style or convention issues that don't affect functionality but may impact maintainability  
+    - E.g. unused variables, unused functions, conditions that are always true or false, etc.
+    - For example, if a function argument is declared as int[8] but only 6 elements are used, and we pass int[6] into this function, this is a style issue, as it does not affect functionality but reduces maintainability
+- **perf**: Performance-related issues that could impact system efficiency or resource usage
+- **bug**: Genuine logical errors, security vulnerabilities, or potential runtime issues that need fixing
+
+- Most duplications tend to be false_positive (not even styling problem, as they have peticular design consideration).
+  - But a few might be serious bug !
+
 # Output Format
 
 Provide a structured response in markdown format with the following sections:
