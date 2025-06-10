@@ -108,6 +108,8 @@ When investigating a CppCheck defect, focus on these key areas:
 Based on your analysis, suggest the classification of the defect into one of these categories:
 
 - **false_positive**: CppCheck incorrectly flagged valid code that follows proper patterns and poses no real risk
+    - false_positive DOES NOT mean that the issue raised by CppCheck does not exist.
+    - It means that from a programmer's perspective, the issue is not a defect and never needs to be fixed.
 - **style**: Code style or convention issues that don't affect functionality but may impact maintainability  
     - E.g. unused variables, unused functions, conditions that are always true or false, etc.
     - For example, if a function argument is declared as int[8] but only 6 elements are used, and we pass int[6] into this function, this is a style issue, as it does not affect functionality but reduces maintainability
