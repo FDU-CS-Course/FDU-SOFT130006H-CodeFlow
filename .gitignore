@@ -24,3 +24,6 @@ conf.yaml
 # coverage report
 coverage.xml
 coverage/
+evaluation/test/*
+evaluation/*.log
+evaluation/results/*
