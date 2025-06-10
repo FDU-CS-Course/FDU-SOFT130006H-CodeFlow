@@ -45,6 +45,9 @@ def search_with_ripgrep(query: str, path: str = PROJECT_ROOT, file_types: Option
 
         if process.returncode == 0:
             logger.debug(f"Length of stdout: {len(stdout)}")
+            max_length = 5000 # 5k characters
+            if len(stdout) > max_length:
+                stdout = stdout[:max_length] + "\n... truncated ...\nThe search result is too long to display. Try a different condition."
             return stdout # ripgrep with --json outputs one JSON object per line for each match
         elif process.returncode == 1: # No matches found
             logger.warning(f"No matches found for query: {query} in path: {path}")
@@ -97,6 +100,9 @@ async def search_with_ripgrep_async(query: str, path: str = PROJECT_ROOT, file_t
 
         if process.returncode == 0: # Success
             logger.debug(f"Length of stdout: {len(stdout)}")
+            max_length = 5000 # 5k characters
+            if len(stdout) > max_length:
+                stdout = stdout[:max_length] + "\n... truncated ...\nThe search result is too long to display. Try a different condition."
             return stdout # ripgrep with --json outputs one JSON object per line for each match
         elif process.returncode == 1: # No matches found
             logger.warning(f"No matches found for query: {query} in path: {path}")
