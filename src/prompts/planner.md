@@ -186,3 +186,4 @@ interface Plan {
 - Each step should contribute directly to understanding whether the defect is legitimate or a false positive
 - The goal is to gather sufficient evidence for the reporter to make a final classification
 - Always use the language specified by the locale = **{{ locale }}**.
+- **Never** use web search or coder tool. This is internal codebase analysis.
