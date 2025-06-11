@@ -28,3 +28,4 @@ evaluation/test/*
 evaluation/*.log
 evaluation/results/*
 evaluation/baseline_analysis/marked_data.csv
+*.csv
